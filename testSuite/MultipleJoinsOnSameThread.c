@@ -1,6 +1,6 @@
 //multiple threads trying to join the same thread (main and two joining one)
 
-#include "userthread.h"
+#include "../userthread.h"
 int count = 0;
 int arr[3] = {0};
 int expected[3] = {1,2,3};

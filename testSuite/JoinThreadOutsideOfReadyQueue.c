@@ -1,6 +1,6 @@
 //thread three joins thread two which is waiting for one to complete
 
-#include "userthread.h"
+#include "../userthread.h"
 int count = 0;
 int arr[3] = {0};
 int expected[3] = {1,2,3};

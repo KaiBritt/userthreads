@@ -1,5 +1,5 @@
 // TEST SJF inserition, making sure SJF insertion is correct after collect time for each function f1,f2,f3
-#include "userthread.h"
+#include "../userthread.h"
 
 int expected[] = {1,2,3};
 int arr[3];

@@ -28,6 +28,7 @@ static struct itimerval quantaTimer;
 //shared globals
 static int isInitialized = FALSE;
 static int valgrind_registers[MAX_THREADS];
+static thread_prop * thread_table[MAX_THREADS];
 static ucontext_t s_ctx;
 static thread_prop * running_thread; 
 FILE * log;
@@ -254,7 +255,8 @@ int thread_join(int tid){ // check that id is in
     if (isInitialized == FALSE) return -1;
     // printf("hello");
 
-    thread_prop * to_point_to_temp = get_by_tid(AllThreads, tid);
+    thread_prop * to_point_to_temp = thread_table[tid];
+    // thread_prop * to_point_to_temp = get_by_tid(AllThreads, tid);
     if (to_point_to_temp == NULL){
         return -1; // target thread not found.
     }
@@ -340,7 +342,7 @@ int thread_libinit(int policy){
 
     isInitialized = TRUE;
     getcontext(&s_ctx);
-    AllThreads = newList();
+    // AllThreads = newList();
     void * stack = malloc(STACKSIZE);
     s_ctx.uc_stack.ss_sp = stack;
     s_ctx.uc_stack.ss_size = STACKSIZE;
@@ -359,7 +361,8 @@ int thread_libinit(int policy){
         running_thread = main_thread;
 
         add(FIFOqueue, main_thread);
-        add(AllThreads,main_thread);
+        thread_table[0] =  main_thread;
+        // add(AllThreads,main_thread);
         getcontext(mc);
         mc->uc_stack.ss_sp = NULL;
         return 0;
@@ -374,7 +377,8 @@ int thread_libinit(int policy){
         thread_prop * main_thread =  new_thread_SJF(mc,main_func_dummy);  // t
         running_thread = main_thread;
         add(SJFqueue, main_thread);
-        add(AllThreads,main_thread);
+        thread_table[0] =  main_thread;
+        // add(AllThreads,main_thread);
         add(funcList,main_func_dummy);
         gettimeofday(&start, NULL);
         getcontext(mc);
@@ -393,7 +397,8 @@ int thread_libinit(int policy){
         thread_prop * main_thread =  new_thread(mc,HIGH_PRIORITY);  // for now setting main to high priority
         running_thread = main_thread;
         add(highPQueue, main_thread);
-        add(AllThreads,main_thread);
+        thread_table[0] =  main_thread;
+        // add(AllThreads,main_thread);
         cur_queue = HIGH_PRIORITY;
         gettimeofday(&start, NULL);
 
@@ -439,7 +444,9 @@ int thread_create(void (*func)(void *), void *arg, int priority){
     if (algo == FCFS){
         thread_to_add =  new_thread(uc,priority);
         add(FIFOqueue, thread_to_add);
-        add(AllThreads,thread_to_add);
+        thread_table[thread_to_add->tid] =  thread_to_add;
+
+        // add(AllThreads,thread_to_add);
 
     } 
     else if(algo == SJF){
@@ -452,7 +459,9 @@ int thread_create(void (*func)(void *), void *arg, int priority){
         }
         thread_to_add = new_thread_SJF(uc,passed_func);
         addSJF(SJFqueue,thread_to_add);
-        add(AllThreads,thread_to_add);
+        thread_table[thread_to_add->tid] =  thread_to_add;
+
+        // add(AllThreads,thread_to_add);
 
     }
     else if (algo == PRIORITY){
@@ -464,7 +473,8 @@ int thread_create(void (*func)(void *), void *arg, int priority){
         thread_to_add = new_thread(uc,priority);
         List * cur_list = getCurList(priority);
         add(cur_list, thread_to_add);
-        add(AllThreads,thread_to_add);
+        thread_table[thread_to_add->tid] =  thread_to_add;
+        // add(AllThreads,thread_to_add);
         sigprocmask(SIG_UNBLOCK,NULL, &procmask);
 
     };
@@ -484,18 +494,25 @@ int thread_libterminate(){
     fclose(log);
     isInitialized = FALSE;
 
+    for(int i = 0; i < global_tid_counter;i++){
+        void * stack = thread_table[i]->context->uc_stack.ss_sp;
+        if (stack != NULL) free(stack);
+        free(thread_table[i]->context);
+        free(thread_table[i]->join_tids);
+        free(thread_table[i]);
+    }
     if (algo == FCFS){
         clearNodes(FIFOqueue);
-        clearThreadProps(AllThreads);
-        free(AllThreads);
+        // clearThreadProps(AllThreads);
+        // free(AllThreads);
         free(FIFOqueue);
         return EXIT_SUCCESS;
     }
     else if (algo == SJF){
-        clearThreadProps(AllThreads);
+        // clearThreadProps(AllThreads);
         clear(funcList);
         clearNodes(SJFqueue);
-        free(AllThreads);
+        // free(AllThreads);
         free(SJFqueue );
         free(funcList);
         return EXIT_SUCCESS;
@@ -505,13 +522,13 @@ int thread_libterminate(){
         clearNodes(highPQueue);
         clearNodes(midPQueue);
         clearNodes(lowPQueue);
-        clearThreadProps(AllThreads);
+        // clearThreadProps(AllThreads);
     
         // clearNodes(AllThreads);
         free(highPQueue);
         free(midPQueue);
         free(lowPQueue);
-        free(AllThreads);
+        // free(AllThreads);
         return EXIT_SUCCESS;
     }
 

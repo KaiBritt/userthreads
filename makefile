@@ -24,6 +24,41 @@ function_prop.o: common.h
 	gcc -Wall -fpic -g -c function_prop.c 
 userthread.o: common.h	
 	gcc -Wall -fpic -g -c userthread.c 
-
 alltests: 
-	gcc -o test ./testSuite/FCFS_insertion.c
+	gcc -g -o test testSuite/DoubleInit.c -L. -luserthread
+	echo DoubleInit
+	valgrind ./test
+	gcc -g -o test testSuite/earlyTerminate.c -L. -luserthread
+	echo "Early Terminate"
+	valgrind ./test
+	echo FCFS insertion
+	gcc -g -o test testSuite/FCFS_insertion.c -L. -luserthread
+	valgrind ./test
+	echo Join lower priority group
+	gcc -g -o test testSuite/JoinLowerPriorityGroup.c -L. -luserthread
+	valgrind ./test
+	echo JoinThreadOutsideOfReadyQueue
+	gcc -g -o test testSuite/JoinThreadOutsideOfReadyQueue.c -L. -luserthread
+	valgrind ./test
+	echo multiple_joins_on_same_thread
+	gcc -g -o test testSuite/multiple_joins_on_same_thread.c -L. -luserthread
+	valgrind ./test
+	echo SJFInsertion
+	gcc -g -o test testSuite/SJFInsertion.c -L. -luserthread
+	valgrind ./test
+	gcc -g -o test testSuite/PriorityTest.c -L. -luserthread
+	echo priority test
+	valgrind ./test
+	echo SJFMiddleInsertion
+	gcc -g -o test testSuite/SJFMiddleInsertion.c -L. -luserthread
+	valgrind ./test
+	echo SJFyield
+	gcc -g -o test testSuite/SJFyield.c -L. -luserthread
+	valgrind ./test
+
+
+
+
+
+
+

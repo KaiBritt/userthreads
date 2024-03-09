@@ -1,5 +1,5 @@
 //Trying to initalize userthread lib twice.
-#include "userthread.h"
+#include "../userthread.h"
 
 
 int main(){
@@ -14,6 +14,6 @@ int main(){
         printf("FAILED\n");
         return -1;
     }
-    pritnf("SUCCESS\n");
+    printf("SUCCESS\n");
     return 0;
     }   

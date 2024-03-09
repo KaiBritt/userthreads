@@ -1,6 +1,6 @@
 //Testing priority to make sure functiosn end in the expected order
 
-#include "userthread.h"
+#include "../userthread.h"
 #include <time.h>
 
 int arr[3] = {0};
@@ -64,10 +64,10 @@ int main(){
     thread_libterminate();
     for (int i = 0; i < 3; i++){
     if (arr[i] != expected[i]){
-        printf("Unexpected order");
+        printf("Unexpected order\n");
         return EXIT_FAILURE;
         }
     }
-    printf("SUCCESS"); 
+    printf("SUCCESS\n"); 
     return EXIT_SUCCESS;
 }
