@@ -9,7 +9,7 @@ struct thread_prop {
     ucontext_t * context;
     int priority;
     int status;
-    struct thread_prop * join_tid; 
+    List * join_tids; 
     struct func_prop * fp;  
     unsigned long current_run_time;
 };

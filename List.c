@@ -95,6 +95,7 @@ void clearThreadProps(List *l) { // removes all items from list-l
         void * stack = Data->context->uc_stack.ss_sp;
         if (stack != NULL) free(Data->context->uc_stack.ss_sp);
         free(Data->context);
+        free(Data->join_tids);
         free(Data);
         free(n);
         n = nxt;

@@ -11,7 +11,7 @@ userthread: userthread.c
 clean: 
 	rm -rf *.o 
 	rm -rf *.gch
-	rm -rf userthread
+	rm -rf libuserthread.so
 node.o: node.h
 	gcc -Wall -fpic -g -c node.c 
 List.o: node.h List.h

@@ -1,10 +1,6 @@
 {
     "files.associations": {
-        "types.h": "c",
-        "thread_props.h": "c",
-        "ucontext.h": "c",
-        "list.h": "c",
-        "function_prop.h": "c",
-        "userthread.h": "c"
+        "time.h": "c",
+        "cstdlib": "c"
     }
 }

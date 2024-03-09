@@ -1,10 +1,10 @@
-//Testing the averaging of SJF, we expect function 3 to be inserted inbetween the threads calling function 1 and 2, and it's average i > 1 but < 2
-
 #include "userthread.h"
+
 int count = 0;
 int expected[] = {2,1,3};
 int arr[3];
 void f1(){
+    thread_yield();
     if (count < 2) count++;
     else arr[count++-2] = 1;
     printf("hello world\n");

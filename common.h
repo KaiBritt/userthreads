@@ -11,7 +11,7 @@
 #define YEILD 1
 #define JOIN 2
 
-#define NO_PRIORITY 777
+#define NO_PRIORITY -1
 #define FCFS 0
 #define SJF 1 
 #define PRIORITY 2
@@ -57,5 +57,7 @@ static List * highPQueue;
 static List * midPQueue;
 static List * lowPQueue;
 
-static  int global_tid_counter;
-static unsigned long total_run_time; // using thread ID for the count.
+extern unsigned long finished_threads;
+extern int global_tid_counter;
+extern unsigned long total_run_time; // using thread ID for the count.
+extern unsigned long finished_processess;

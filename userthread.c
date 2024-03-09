@@ -9,7 +9,8 @@ static List * AllThreads;
 //SJF globals
 static List * SJFqueue;
 static List * funcList;
-static unsigned long total_run_time = 0;
+unsigned long finished_threads = 0;
+unsigned long total_run_time = 0;
 static struct timeval pstart,start, pstop, stop;
 
 
@@ -20,7 +21,7 @@ static List * lowPQueue;
 static int cur_queue; 
 static sigset_t procmask;
 static unsigned long pRuntimes[3] = {0};
-static int run_prob[] = {1,0,-1,1,0,-1,1,0,-1,1,0,-1,1,-1,1,-1,-1,-1,-1};
+static int run_prob[] = {0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,-1,0,-1,-1,-1,-1};
 static struct itimerval quantaTimer; 
 
 
@@ -28,6 +29,7 @@ static struct itimerval quantaTimer;
 static int isInitialized = FALSE;
 static int valgrind_registers[MAX_THREADS];
 static ucontext_t s_ctx;
+static thread_prop * running_thread; 
 FILE * log;
 static int algo;
 
@@ -42,8 +44,9 @@ static List * getCurList(int cur_queue){
         return lowPQueue;
     }
     return NULL;
-
 }
+
+
 static int getNextQueue(){
     int randnum = rand() % sizeof(run_prob)/sizeof(run_prob[0]);
     if(highPQueue->head == NULL && lowPQueue->head == NULL && midPQueue->head == NULL){
@@ -130,14 +133,18 @@ static void FIFOscheduler(int flag){
     else{ // deleting
         cur_thread->status = TERMINATED;
         deleteHead(FIFOqueue);
-        if (cur_thread->join_tid != NULL){
-            addHead(FIFOqueue,cur_thread->join_tid);
+        while (cur_thread->join_tids->head != NULL){
+            thread_prop * thread_prop_to_add = cur_thread->join_tids->head->data;
+            addHead(FIFOqueue,thread_prop_to_add);
+            deleteHead(cur_thread->join_tids);
         }
     }
     writeToLog(cur_thread);
     makecontext(&s_ctx,FIFOscheduler,1, DEL); // setting next to be delete when it is called again,
     thread_prop * cur_head = FIFOqueue->head->data;
     cur_head->status = ACTIVE;
+    running_thread = cur_head;
+
     writeToLog(cur_head);
     setcontext(cur_head->context);
 
@@ -150,8 +157,6 @@ static void SJFscheduler(int flag){
     thread_prop * cur_thread = SJFqueue->head->data;
     if (cur_thread->tid != 0){ // only changing time when it's not main b/c I assume main is always at the front
     cur_thread->current_run_time += (stop.tv_sec * 1000000+ stop.tv_usec)-(start.tv_sec * 1000000 + start.tv_usec); //updating time, whenever scheudler is invoked the head will be moved.
-    printf("%lu\n",cur_thread->current_run_time);
-    total_run_time += cur_thread->current_run_time;
     }
 
     if (flag == JOIN){
@@ -168,10 +173,14 @@ static void SJFscheduler(int flag){
         cur_thread->status = TERMINATED;
         // updating func_props
         func_prop * func = get_by_func(funcList, cur_thread->fp->func_pointer);
+
         fpAddTime(func,cur_thread->current_run_time);
+        finished_threads++;
         deleteHead(SJFqueue);
-        if (cur_thread->join_tid != NULL){
-            addHead(SJFqueue,cur_thread->join_tid);
+        while (cur_thread->join_tids->head != NULL){
+            thread_prop * thread_prop_to_add = cur_thread->join_tids->head->data;
+            addHead(SJFqueue,thread_prop_to_add);
+            deleteHead(cur_thread->join_tids);
         }
     }
     writeToLog(cur_thread);
@@ -180,6 +189,7 @@ static void SJFscheduler(int flag){
     makecontext(&s_ctx,SJFscheduler,1, DEL); // setting next to be delete when it is called again,
     thread_prop * cur_head = SJFqueue->head->data;
     cur_head->status = ACTIVE;
+    running_thread = cur_head;
     writeToLog(cur_head);
     gettimeofday(&start,0); //starting the clock for the next process
     setcontext(cur_head->context);
@@ -213,9 +223,11 @@ static void priorityScheduler(int flag){
         cur_thread->status = TERMINATED;
         // updating func_props
        deleteHead(cur_list);
-        if (cur_thread->join_tid != NULL){
-            cur_list = getCurList(cur_thread->join_tid->priority);
-            addHead(cur_list,cur_thread->join_tid);
+        while (cur_thread->join_tids->head != NULL){
+            thread_prop * thread_prop_to_add = cur_thread->join_tids->head->data;
+            deleteHead(cur_thread->join_tids);
+            cur_list = getCurList(thread_prop_to_add->priority);
+            addHead(cur_list,thread_prop_to_add);
         }
     }
     writeToLog(cur_thread);
@@ -225,6 +237,8 @@ static void priorityScheduler(int flag){
     makecontext(&s_ctx,priorityScheduler,1, DEL); // setting next to be delete when it is called again,
     thread_prop * cur_head = cur_list->head->data;
     cur_head->status= ACTIVE;
+    running_thread = cur_head;
+
     writeToLog(cur_head);
     // printf("%d\n",cur_head->tid);
     gettimeofday(&start,0); //starting the clock for the next process
@@ -248,16 +262,16 @@ int thread_join(int tid){ // check that id is in
     if (algo == FCFS){
         thread_prop * temp = FIFOqueue->head->data; 
         if (to_point_to_temp->status != TERMINATED){
-            to_point_to_temp->join_tid = temp;
+            add(to_point_to_temp->join_tids,temp);
             makecontext(&s_ctx,FIFOscheduler,1,JOIN);
-            swapcontext(temp->context,&s_ctx);
+            swapcontext(temp->context, &s_ctx);
             return 0;
         }  
     }
     else if (algo == SJF){
         thread_prop * temp = SJFqueue->head->data; 
         if (to_point_to_temp->status != TERMINATED){
-            to_point_to_temp->join_tid = temp;
+            add(to_point_to_temp->join_tids,temp);
             makecontext(&s_ctx,SJFscheduler,1,JOIN);
             swapcontext(temp->context,&s_ctx);
             return 0;
@@ -270,14 +284,12 @@ int thread_join(int tid){ // check that id is in
 
         thread_prop * temp = cur_list->head->data; 
         if (to_point_to_temp->status != TERMINATED){
-            to_point_to_temp->join_tid = temp;
+            add(to_point_to_temp->join_tids,temp);
             
             makecontext(&s_ctx,priorityScheduler,1,JOIN);
             swapcontext(temp->context,&s_ctx);
             return 0;
         }  
-
-
     }
     else{
         return 0; // already joined just continue as normal
@@ -323,6 +335,7 @@ static void signalHandler(int sig){
 int thread_libinit(int policy){
     if ((policy != SJF && policy != FCFS && policy != PRIORITY) || isInitialized == TRUE) return -1;
     gettimeofday(&pstart,NULL);
+    gettimeofday(&start, NULL);
     log = fopen("userthread_log.txt","w");
 
     isInitialized = TRUE;
@@ -343,6 +356,8 @@ int thread_libinit(int policy){
         FIFOqueue = newList();
         ucontext_t * mc = (ucontext_t *) malloc(sizeof(ucontext_t));
         thread_prop * main_thread =  new_thread(mc,-1);
+        running_thread = main_thread;
+
         add(FIFOqueue, main_thread);
         add(AllThreads,main_thread);
         getcontext(mc);
@@ -355,9 +370,12 @@ int thread_libinit(int policy){
         SJFqueue = newList();
         funcList = newList();
         ucontext_t * mc = (ucontext_t *) malloc(sizeof(ucontext_t));
-        thread_prop * main_thread =  new_thread_SJF(mc,new_function_time(0,1));  // t
+        func_prop * main_func_dummy = new_function_time(0,1);
+        thread_prop * main_thread =  new_thread_SJF(mc,main_func_dummy);  // t
+        running_thread = main_thread;
         add(SJFqueue, main_thread);
         add(AllThreads,main_thread);
+        add(funcList,main_func_dummy);
         gettimeofday(&start, NULL);
         getcontext(mc);
         mc->uc_stack.ss_sp = NULL;
@@ -373,6 +391,7 @@ int thread_libinit(int policy){
         sigaddset(&procmask, SIGALRM); // temporairly maksing sig allarm
         ucontext_t * mc = (ucontext_t *) malloc(sizeof(ucontext_t));
         thread_prop * main_thread =  new_thread(mc,HIGH_PRIORITY);  // for now setting main to high priority
+        running_thread = main_thread;
         add(highPQueue, main_thread);
         add(AllThreads,main_thread);
         cur_queue = HIGH_PRIORITY;
@@ -427,11 +446,10 @@ int thread_create(void (*func)(void *), void *arg, int priority){
         
         func_prop * passed_func = get_by_func(funcList,func);
         if (passed_func == NULL){ //add function to func list if it's not already there
-            printf("not ran\n");
+            // printf("not ran\n");
             passed_func = new_function(func);
             add(funcList,passed_func);
         }
-        printf("avg runtime %lu \n", fpGetAverageTime(passed_func));
         thread_to_add = new_thread_SJF(uc,passed_func);
         addSJF(SJFqueue,thread_to_add);
         add(AllThreads,thread_to_add);
@@ -457,7 +475,7 @@ int thread_create(void (*func)(void *), void *arg, int priority){
 
 
 int thread_libterminate(){
-    if (isInitialized == FALSE) return -1;
+    if (isInitialized == FALSE || (running_thread->tid != 0)) return -1;   // can't call terminate unless it's the main thread and the tread lib has been initialized
 
     free(s_ctx.uc_stack.ss_sp); // free stack
     for (int i = 0; i < global_tid_counter;i++){

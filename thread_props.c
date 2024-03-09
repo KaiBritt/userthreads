@@ -5,7 +5,7 @@
 #include "thread_props.h"
 
 
-static int global_tid_counter = 0;
+int global_tid_counter = 0;
 
 thread_prop * new_thread(ucontext_t * context, int priority) {
     thread_prop * new_thread_props = (thread_prop *)  malloc(sizeof(thread_prop));
@@ -13,7 +13,7 @@ thread_prop * new_thread(ucontext_t * context, int priority) {
     new_thread_props->tid = global_tid_counter++;
     new_thread_props->priority = priority;
     new_thread_props->status = SCHEDULED;
-    new_thread_props->join_tid = NULL;
+    new_thread_props->join_tids = newList();
     new_thread_props->fp = NULL;
     new_thread_props->current_run_time = 0 ;
 
@@ -28,7 +28,7 @@ thread_prop * new_thread_SJF(ucontext_t * context, func_prop * func_prop) {
     new_thread_props->fp = func_prop;
     new_thread_props->current_run_time = 0 ;
     new_thread_props->status = SCHEDULED;
-    new_thread_props->join_tid = NULL;
+    new_thread_props->join_tids = newList();
 
 
     return new_thread_props;
