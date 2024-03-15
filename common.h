@@ -15,6 +15,8 @@
 #define FCFS 0
 #define SJF 1 
 #define PRIORITY 2
+#define PSJF 3
+#define UPRIORITY 4
 
 #define TERMINATED -1
 #define ACTIVE 0
@@ -48,14 +50,6 @@
 
 typedef unsigned long  tid_t;
 
-static List * FIFOqueue; 
-
-static List * SJFqueue;
-static List * funcList;
-
-static List * highPQueue;
-static List * midPQueue;
-static List * lowPQueue;
 
 extern unsigned long finished_threads;
 extern int global_tid_counter;

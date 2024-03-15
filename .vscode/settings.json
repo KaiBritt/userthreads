@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "time.h": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "userthread.h": "c"
     }
 }

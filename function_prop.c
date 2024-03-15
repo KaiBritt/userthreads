@@ -32,8 +32,6 @@ unsigned long fpGetAverageTime(func_prop * fp){
     if (count == 0){
         if (total_run_time == 0) return DEFAULTQUANTA; // 50 unit defat quant
         // printf("\navg time: %lu\n",total_run_time/(unsigned long)(global_tid_counter-1));
-
-        unsigned long out = total_run_time/(unsigned long)(finished_threads);
         // printf("out:%lu\n",out);
 
         return total_run_time/(unsigned long)(finished_threads); // not including the most recent process
@@ -48,3 +46,5 @@ void fpAddTime(func_prop * fp, unsigned long rt){
     fp->previous_runtimes[0] = rt;
     total_run_time+= fp->previous_runtimes[0];
 }
+
+void fpAddTimePredictive(func_prop * fp, unsigned long rt){};

@@ -41,7 +41,7 @@ alltests:
 	gcc -g -o test testSuite/JoinThreadOutsideOfReadyQueue.c -L. -luserthread
 	valgrind ./test
 	echo multiple_joins_on_same_thread
-	gcc -g -o test testSuite/multiple_joins_on_same_thread.c -L. -luserthread
+	gcc -g -o test testSuite/MultipleJoinsOnSameThread.c -L. -luserthread
 	valgrind ./test
 	echo SJFInsertion
 	gcc -g -o test testSuite/SJFInsertion.c -L. -luserthread
