@@ -1,6 +1,9 @@
 # Kai Britt
 ### Collaborated with Ben Jiang
 
+### Descripton
+Simulating a task scheduler using user level threads
+
 ### How To Complie: 
 #### make
 
