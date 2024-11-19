@@ -23,13 +23,5 @@ Simulating a task scheduler using user level threads
 - priority protocol for threads
 - UPriority protocol for threads
 - Also made it so the same thread can be joined by multiple threads
-### Extra Credit:
-
-- Implemented premtive SJF called PSJF, have one test case to demostrate it, called PSJF Middle inseriton, on the second run the shortest job is queued first but is interrupted before it can completely finish, look at userthread_log.txt
-- Implemented UNIX like priority queue test case UPriorityQueue demonstrates this all three process move down the priority ladder as they fail to complete in the given quanta. A know limitation hear is that yield always lowers your priority.
-- Implemented different quanta's for UPriority using 100, 200, 300 milliseconds. Look at UPriorityQueue test log to see the different run times for each priority group. noticed when there are different quanta, there are some cases when a mid priority
-
-
-
 
 
